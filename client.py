@@ -101,19 +101,6 @@ CREATE TABLE IF NOT EXISTS users (
 """
 execute_query(connection, create_users_table, ())     
 
-
-
-#s.send('send -e'.encode('utf-8'))
-#s.close()
-#s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-#ssl_sock = ssl.wrap_socket(s, ca_certs="server.crt", cert_reqs=ssl.CERT_REQUIRED)
-
-
-        #Connect To The Host, Send Data And Wait To Recieve Data
-#ssl_sock.connect((host_name,host_port))
-#ssl_sock.write("boo!".encode('utf-8'))
-
 # select mode
 mode = input('You can choose between non-TLS and TLS:\n')
 ####################################### non-TLS connection (you can't send encrypted messages in this mode)
@@ -157,26 +144,7 @@ if mode == 'non-TLS':
         # SEND
         elif command[1] == 'send' and command[2] != '-e':
             s.send(command[1].encode('utf-8'))
-            s.sendall(command[2][1:-1].encode('utf-8'))
-        # SEND Encrypt
-        elif command[1] == 'send' and command[2] == '-e':
-            print('hah')
-            s.send('send -e'.encode('utf-8'))
-            print('hah')
-            s.close()
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-            ssl_sock = ssl.wrap_socket(s, ca_certs="server.crt", cert_reqs=ssl.CERT_REQUIRED)
-
-
-            #Connect To The Host, Send Data And Wait To Recieve Data
-            ssl_sock.connect((host_name,host_port))
-            ssl_sock.write("boo!")
-            #response = encrypted_socket.recv(512)
-
-            #Close The Connection
-            #encrypted_socket.close()
-
+            s.sendall(command[2].encode('utf-8'))
 
         elif command[1] == 'history':
             select_users = "SELECT * from users"

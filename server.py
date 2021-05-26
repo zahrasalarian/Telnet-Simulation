@@ -51,17 +51,6 @@ if mode == 'non-TLS':
                     break
                 #conn.sendall(data)
                 print(data.decode('utf-8'))
-        elif data == b'send -e':
-            #while 1:
-            #    data = conn.recv(1024)
-            #    if not data:
-            #        break
-            #    #conn.sendall(data)
-            #    print(data)
-            #    break
-            connstream = ssl.wrap_socket(conn, server_side=True, certfile="server.crt", keyfile="server.key")
-            data = connstream.read()
-            print(data)
 
     conn.close()
 
@@ -88,14 +77,5 @@ else:
     (conn, address) = s.accept()
     connstream = ssl.wrap_socket(conn, server_side=True, certfile="server.crt", keyfile="server.key")
     while True:
-    #data = conn.recv(32)
-    #if data == b'send -e':
-        #while 1:
-        #    data = conn.recv(1024)
-        #    if not data:
-        #        break
-        #    #conn.sendall(data)
-        #    print(data)
-        #    break
         data = connstream.read().decode()
         print(data)
