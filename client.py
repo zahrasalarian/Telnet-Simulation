@@ -91,6 +91,33 @@ def execute_read_query(connection, query):
     except Error as e:
         print(f"The error '{e}' occurred")
 
+def send_file(file_name, s):
+    #Send file
+    with open(file_name, 'rb') as fs: 
+        for data in fs:
+            s.sendall(data)
+        fs.close()
+    s.close()
+
+def rec_file(file_name, s):
+    with open(file_name, "wb") as fw:
+        print("Receiving..")
+        while True:
+            print('receiving')
+            data = s.recv(1024)
+            #if data == b'BEGIN':
+            #    continue
+            if not data:
+                print('Breaking from file write')
+                break
+            else:
+                print('Received: ', data.decode('utf-8'))
+                fw.write(data)
+                print('Wrote to file', data.decode('utf-8'))
+        fw.close()
+        print("Received..")
+        s.close()
+
 # create table for commands
 connection = create_connection("history.sqlite")
 create_users_table = """
@@ -116,36 +143,28 @@ if mode == 'non-TLS':
         command = command.split()
         # UPLOAD
         if command[1] == "upload":
+            cmd = command[1] + ' ' + command[2]
             s.send(command[1].encode('utf-8'))
             # Send file
-            text_file = command[2]
-            
-            #Send file
-            with open(text_file, 'rb') as fs: 
-                #Using with, no file close is necessary, 
-                #with automatically handles file close
-                #s.send(b'BEGIN')
-                while True:
-                    data = fs.read(1024)
-                    print('Sending data', data.decode('utf-8'))
-                    s.send(data)
-                    print('Sent data', data.decode('utf-8'))
-                    if not data:
-                        print('Breaking from sending data')
-                        break
-                s.send(b'ENDED')
-                fs.close()
+            send_file(command[2], s)
+
         # EXEC
         elif command[1] == 'exec':
-            s.send(command[1].encode('utf-8'))
             # Send cmd to exec
-            cmd_to_exec = command[2]
+            cmd_to_exec = command[1] + ' ' + command[2]
             s.send(cmd_to_exec.encode('utf-8'))
+            #Receive, output and save file
+            rec_file('stdout_from_server.txt', s)
+            break
+
         # SEND
         elif command[1] == 'send' and command[2] != '-e':
-            s.send(command[1].encode('utf-8'))
-            s.sendall(command[2].encode('utf-8'))
+            message = command[1] + ' ' + command[2]
+            s.send(message.encode('utf-8'))
+            ack = s.recv(1024)
+            print(ack.decode('utf-8'))
 
+        # HISTORY
         elif command[1] == 'history':
             select_users = "SELECT * from users"
             cmds = execute_read_query(connection, select_users)
@@ -154,17 +173,6 @@ if mode == 'non-TLS':
             for cmd in cmds:
                 print(cmd)
     s.close()
-
-            #Receive file
-            #print("Receiving..")
-            #with open(text_file, 'wb') as fw:
-            #    while True:
-            #        data = s.recv(1024)
-            #        if not data:
-            #            break
-            #        fw.write(data)
-            #    fw.close()
-            #print("Received..")
 
 ####################################### TLS connection (you only can send encrypted messages in this mode)
 else:
@@ -177,3 +185,6 @@ else:
         if command[1] == 'send' and command[2] == '-e':
             msg = command[3]
             ssl_sock.write(msg.encode('utf-8'))
+            ack = ssl_sock.read().decode()
+            print(ack)
+
