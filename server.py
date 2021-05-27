@@ -1,16 +1,11 @@
-import socket, ssl, sys, os
+import socket, sys, os
 import subprocess
+import sqlite3, ssl
+from sqlite3 import Error
 
 # TCP-socket
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind(('localhost', 50000))
-#while 1:
-#    data = conn.recv(1024)
-#    if not data:
-#        break
-#    conn.sendall(data)
-#    print(data)
-mode = input('You can choose between non-TLS and TLS:\n')
                 
 def send_file(file_name, s):
     #Send file
@@ -35,7 +30,10 @@ def rec_file(file_name, s):
             fw.write(data[:-4])
             break
         fw.write(data)
-    fw.close()
+    fw.close()  
+
+# Select mode
+mode = input('You can choose between non-TLS and TLS:\n')
 
 ####################################### non-TLS connection (you can't send encrypted messages in this mode)
 if mode == 'non-TLS':
@@ -43,8 +41,10 @@ if mode == 'non-TLS':
     (conn, address) = s.accept()
     while True:
         not_decoded = conn.recv(1024)
+
         print('not decoded data: {}'.format(map(ord, not_decoded)))
         data = not_decoded.decode('utf-8').split()
+        print(data)
         #print("message {}".format(data))
         
         if data[0] == 'upload':
@@ -72,6 +72,7 @@ if mode == 'non-TLS':
             message = data[1]
             print(message)
             conn.sendall('Message recceived'.encode('utf-8'))
+    
 
     conn.close()
 else:
@@ -80,5 +81,9 @@ else:
     connstream = ssl.wrap_socket(conn, server_side=True, certfile="server.crt", keyfile="server.key")
     while True:
         data = connstream.read().decode()
+        # insert into database
+        create_users = "INSERT INTO users (command) VALUES (?)"
+        execute_query(connection, create_users, ('telnet send -e'+ data,))
+        
         print(data)
         connstream.write('Message recceived'.encode('utf-8'))

@@ -91,6 +91,17 @@ def execute_read_query(connection, query):
     except Error as e:
         print(f"The error '{e}' occurred")
 
+# create table for commands
+connection = create_connection("history.sqlite")
+create_users_table = """
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  command TEXT NOT NULL
+);
+"""
+execute_query(connection, create_users_table, ())   
+
+#######################################
 def send_file(file_name, s):
     #Send file
     fw = open(file_name, 'rb')
@@ -115,17 +126,7 @@ def rec_file(file_name, s):
             break
         fw.write(data)
     fw.close()
-
-# create table for commands
-connection = create_connection("history.sqlite")
-create_users_table = """
-CREATE TABLE IF NOT EXISTS users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  command TEXT NOT NULL
-);
-"""
-execute_query(connection, create_users_table, ())     
-
+    
 # select mode
 mode = input('You can choose between non-TLS and TLS:\n')
 ####################################### non-TLS connection (you can't send encrypted messages in this mode)
@@ -137,7 +138,7 @@ if mode == 'non-TLS':
         # insert into database
         create_users = "INSERT INTO users (command) VALUES (?)"
         execute_query(connection, create_users, (command,))
-        
+
         command = command.split()
         # UPLOAD
         if command[1] == "upload":
@@ -165,7 +166,6 @@ if mode == 'non-TLS':
         elif command[1] == 'history':
             select_users = "SELECT * from users"
             cmds = execute_read_query(connection, select_users)
-
             print('Recent commands are:')
             for cmd in cmds:
                 print(cmd)
