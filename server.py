@@ -11,39 +11,40 @@ s.bind(('localhost', 50000))
 #    conn.sendall(data)
 #    print(data)
 mode = input('You can choose between non-TLS and TLS:\n')
-
-def rec_file(file_name, s):
-    with open(file_name, "wb") as fw:
-        print("Receiving..")
-        while True:
-            print('receiving')
-            data = s.recv(1024)
-            #if data == b'BEGIN':
-            #    continue
-            if not data:
-                print('Breaking from file write')
-                break
-            else:
-                print('Received: ', data.decode('utf-8'))
-                fw.write(data)
-                print('Wrote to file', data.decode('utf-8'))
-        fw.close()
-        print("Received..")
-        s.close()
                 
 def send_file(file_name, s):
     #Send file
-    with open(file_name, 'rb') as fs: 
-        for data in fs:
-            s.sendall(data)
-        fs.close()
-    s.close()
+    fw = open(file_name, 'rb')
+    data = fw.read(1024)
+    while(data):
+        s.send(data)
+        data = fw.read(1024)
+    s.send(b'done')
+    print("Completed sending.")
+    fw.close()
+
+def rec_file(file_name, s):
+    fw = open(file_name, 'wb')
+    while True:
+        print('Receiving data...')
+        data = s.recv(1024)
+        print(data)
+        print(data[-4:])
+        if data[-4:] ==b'done':
+            print('Completed receiving.')
+            fw.write(data[:-4])
+            break
+        fw.write(data)
+    fw.close()
+
 ####################################### non-TLS connection (you can't send encrypted messages in this mode)
 if mode == 'non-TLS':
     s.listen(1)
     (conn, address) = s.accept()
     while True:
-        data = conn.recv(1024).decode('utf-8').split()
+        not_decoded = conn.recv(1024)
+        print('not decoded data: {}'.format(map(ord, not_decoded)))
+        data = not_decoded.decode('utf-8').split()
         #print("message {}".format(data))
         
         if data[0] == 'upload':
@@ -51,7 +52,7 @@ if mode == 'non-TLS':
             text_file = 'rec_from_client.txt'
             #Receive file
             rec_file(text_file, conn)
-            break
+            #break
 
         elif data[0] == 'exec':
             cmd_to_exec = data[1]
@@ -65,7 +66,7 @@ if mode == 'non-TLS':
                 text_file.write(stderr.decode())
             #Send file
             send_file('stdout.txt', conn)
-            break
+            #break
 
         elif data[0] == 'send':
             message = data[1]

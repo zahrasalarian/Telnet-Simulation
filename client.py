@@ -93,30 +93,28 @@ def execute_read_query(connection, query):
 
 def send_file(file_name, s):
     #Send file
-    with open(file_name, 'rb') as fs: 
-        for data in fs:
-            s.sendall(data)
-        fs.close()
-    s.close()
+    fw = open(file_name, 'rb')
+    data = fw.read(1024)
+    while(data):
+        s.send(data)
+        data = fw.read(1024)
+    s.send(b'done')
+    print("Completed sending.")
+    fw.close()
 
 def rec_file(file_name, s):
-    with open(file_name, "wb") as fw:
-        print("Receiving..")
-        while True:
-            print('receiving')
-            data = s.recv(1024)
-            #if data == b'BEGIN':
-            #    continue
-            if not data:
-                print('Breaking from file write')
-                break
-            else:
-                print('Received: ', data.decode('utf-8'))
-                fw.write(data)
-                print('Wrote to file', data.decode('utf-8'))
-        fw.close()
-        print("Received..")
-        s.close()
+    fw = open(file_name, 'wb')
+    while True:
+        print('Receiving data...')
+        data = s.recv(1024)
+        print(data)
+        print(data[-4:])
+        if data[-4:] ==b'done':
+            print('Completed receiving.')
+            fw.write(data[:-4])
+            break
+        fw.write(data)
+    fw.close()
 
 # create table for commands
 connection = create_connection("history.sqlite")
@@ -155,7 +153,6 @@ if mode == 'non-TLS':
             s.send(cmd_to_exec.encode('utf-8'))
             #Receive, output and save file
             rec_file('stdout_from_server.txt', s)
-            break
 
         # SEND
         elif command[1] == 'send' and command[2] != '-e':
