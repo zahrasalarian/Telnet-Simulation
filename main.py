@@ -2,6 +2,8 @@ import sqlite3, ssl
 from sqlite3 import Error
 import socket, sys, os
 import subprocess, time
+import rsa, pickle
+
 
 ####################################### send get request to google.com
 def get_google():
@@ -89,7 +91,7 @@ def execute_read_query(connection, query):
     except Error as e:
         print(f"The error '{e}' occurred")
 
-#######################################
+####################################### Send and Receive file functions
 def send_file(file_name, s):
     #Send file
     fw = open(file_name, 'rb')
@@ -115,6 +117,7 @@ def rec_file(file_name, s):
         fw.write(data)
     fw.close()
 
+####################################### Server and Client part
 # Choose between server and client
 c_or_s = int(input('For being server enter 0 and for being client enter 1\n'))
 
@@ -122,7 +125,7 @@ c_or_s = int(input('For being server enter 0 and for being client enter 1\n'))
 if c_or_s == 0:
     # TCP-socket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind(('localhost', 50000))
+    s.bind(('localhost', 23))
     s.listen(1)
     (conn, address) = s.accept()
     while True:
@@ -135,7 +138,7 @@ if c_or_s == 0:
         # UPLOAD
         if data[0] == 'upload':
             print('Command: Upload')
-            text_file = 'rec_from_client.txt'
+            text_file = 'recfclient_' + data[1]
             #Receive file
             rec_file(text_file, conn)
             #break
@@ -153,7 +156,6 @@ if c_or_s == 0:
                 text_file.write(stderr.decode())
             #Send file
             send_file('stdout.txt', conn)
-            #break
 
         # SEND
         elif data[0] == 'send' and data[1] != '-e':
@@ -165,25 +167,39 @@ if c_or_s == 0:
         
         # SEND -E
         elif data[0] == 'send' and data[1] == '-e':
+            # manual encryption
+            ## generate public and private keys for encryption
+            publicKey, privateKey = rsa.newkeys(512)
+            # send public key to client
+            to_send = pickle.dumps(publicKey)
+            conn.send(to_send)            
+            # receive message
+            encMessage = conn.recv(1024)
+            decMessage = rsa.decrypt(encMessage, privateKey).decode()
+            print(decMessage)
+            conn.sendall('Message recceived'.encode('utf-8'))
+
+            continue
+            # tls encryption
             # close simple connection
             conn.close()
+            # build TLS connection
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.bind(('localhost', 50000))
+            s.bind(('localhost', 23))
             s.listen(5)
             (conn, address) = s.accept()
             connstream = ssl.wrap_socket(conn, server_side=True, certfile="server.crt", keyfile="server.key")
-            while True:
-                data = connstream.read(1024).decode()
-                print(data)
-                connstream.write('Message recceived'.encode('utf-8'))
-                # close tls connection
-                connstream.close()
-                # open simple connection
-                s.listen(1)
-                (conn, address) = s.accept()
-                break
+            # Rec message
+            data = connstream.read(1024).decode()
+            print(data)
+            connstream.write('Message recceived'.encode('utf-8'))
+            # close tls connection
+            connstream.close()
+            # open simple connection
+            s.listen(1)
+            (conn, address) = s.accept()
 
-# client
+# Client
 elif c_or_s == 1:
     # create table for commands
     connection = create_connection("history.sqlite")
@@ -197,9 +213,9 @@ elif c_or_s == 1:
     
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     host_name = 'localhost'
-    host_port = 50000
+    host_port = 23
     
-    s.connect(('localhost', 50000))
+    s.connect(('localhost', 23))
     while True:
         command = input()
         # insert into database
@@ -210,7 +226,7 @@ elif c_or_s == 1:
         # UPLOAD
         if command[1] == "upload":
             cmd = command[1] + ' ' + command[2]
-            s.send(command[1].encode('utf-8'))
+            s.send(cmd.encode('utf-8'))
             # Send file
             send_file(command[2], s)
 
@@ -233,27 +249,45 @@ elif c_or_s == 1:
 
         # SEND Encrypted
         elif command[1] == 'send' and command[2] == '-e':
+            # manual encryption
+            message = command[1] + ' ' + command[2]
+            s.send(message.encode('utf-8'))
+
+            # receive public key from client
+            publicKey = s.recv(1024)
+            publicKey = pickle.loads(publicKey)
+
+            message = command[3]
+            for c in command[4:]:
+                message += ' ' + c
+            encMessage = rsa.encrypt(message.encode(), publicKey)
+            print(encMessage)
+            s.send(encMessage)
+            ack = s.recv(1024)
+            print(ack.decode('utf-8'))
+
+            continue
+            # tls encryption
             message = command[1] + ' ' + command[2]
             s.send(message.encode('utf-8'))
             s.close()
             time.sleep(3)
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             ssl_sock = ssl.wrap_socket(s, ca_certs="server.crt", cert_reqs=ssl.CERT_REQUIRED)
-            #Connect To The Host
+            #Connect To The TLS Host
             ssl_sock.connect((host_name,host_port))
-            while True:
-                msg = command[3]
-                for c in command[4:]:
-                    msg += ' ' + c
-                ssl_sock.write(msg.encode('utf-8'))
-                ack = ssl_sock.read().decode()
-                print(ack)
-                # close tls connection
-                s.close()
-                # open simple connection
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect(('localhost', 50000))
-                break
+            # Send message
+            msg = command[3]
+            for c in command[4:]:
+                msg += ' ' + c
+            ssl_sock.write(msg.encode('utf-8'))
+            ack = ssl_sock.read().decode()
+            print(ack)
+            # close tls connection
+            s.close()
+            # open simple connection
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect(('localhost', 23))
 
 
         # HISTORY
