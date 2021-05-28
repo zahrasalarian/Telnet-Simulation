@@ -4,18 +4,19 @@ stdout:
 
  Directory of C:\Users\Zahra Salarian\Downloads\Term6\CN\P2
 
-05/28/2021  12:24 AM    <DIR>          .
-05/28/2021  12:24 AM    <DIR>          ..
+05/28/2021  02:27 PM    <DIR>          .
+05/28/2021  02:27 PM    <DIR>          ..
 05/28/2021  12:21 AM             6,163 client.py
 05/23/2021  09:19 PM           239,921 CN-P2-B.pdf
-05/28/2021  12:24 AM            12,288 history.sqlite
-05/27/2021  09:05 PM                55 rec_from_client.txt
-05/24/2021  11:40 PM                55 send.txt
+05/28/2021  02:27 PM            12,288 history.sqlite
+05/28/2021  02:26 PM             8,780 main.py
+05/28/2021  02:23 PM                16 rec_from_client.txt
+05/28/2021  02:09 PM                16 send.txt
 05/25/2021  07:07 PM             1,848 server.crt
 05/25/2021  07:05 PM             3,294 server.key
-05/28/2021  12:20 AM             2,818 server.py
-05/28/2021  12:23 AM               113 stdout.txt
-05/28/2021  12:24 AM                 0 stdout_from_server.txt
-              10 File(s)        266,555 bytes
-               2 Dir(s)  109,006,893,056 bytes free
+05/28/2021  01:46 PM             2,673 server.py
+05/28/2021  02:24 PM               938 stdout.txt
+05/28/2021  02:27 PM                 0 stdout_from_server.txt
+              11 File(s)        275,937 bytes
+               2 Dir(s)  108,811,055,104 bytes free
 stderr:

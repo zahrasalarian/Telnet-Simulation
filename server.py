@@ -47,6 +47,7 @@ if mode == 'non-TLS':
         print(data)
         #print("message {}".format(data))
         
+        # UPLOAD
         if data[0] == 'upload':
             print('Command: Upload')
             text_file = 'rec_from_client.txt'
@@ -54,6 +55,7 @@ if mode == 'non-TLS':
             rec_file(text_file, conn)
             #break
 
+        # EXEC
         elif data[0] == 'exec':
             cmd_to_exec = data[1]
             proc = subprocess.Popen(cmd_to_exec, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -66,13 +68,13 @@ if mode == 'non-TLS':
                 text_file.write(stderr.decode())
             #Send file
             send_file('stdout.txt', conn)
-            #break
 
+        # SEND
         elif data[0] == 'send':
             message = data[1]
             print(message)
             conn.sendall('Message recceived'.encode('utf-8'))
-    
+            
 
     conn.close()
 else:
@@ -81,9 +83,5 @@ else:
     connstream = ssl.wrap_socket(conn, server_side=True, certfile="server.crt", keyfile="server.key")
     while True:
         data = connstream.read().decode()
-        # insert into database
-        create_users = "INSERT INTO users (command) VALUES (?)"
-        execute_query(connection, create_users, ('telnet send -e'+ data,))
-        
         print(data)
         connstream.write('Message recceived'.encode('utf-8'))
