@@ -158,6 +158,8 @@ if c_or_s == 0:
         # SEND
         elif data[0] == 'send' and data[1] != '-e':
             message = data[1]
+            for c in data[2:]:
+                message += ' ' + c
             print(message)
             conn.sendall('Message recceived'.encode('utf-8'))
         
@@ -222,7 +224,9 @@ elif c_or_s == 1:
 
         # SEND
         elif command[1] == 'send' and command[2] != '-e':
-            message = command[1] + ' ' + command[2]
+            message = command[1]
+            for c in command[2:]:
+                message += ' ' + c
             s.send(message.encode('utf-8'))
             ack = s.recv(1024)
             print(ack.decode('utf-8'))
@@ -239,6 +243,8 @@ elif c_or_s == 1:
             ssl_sock.connect((host_name,host_port))
             while True:
                 msg = command[3]
+                for c in command[4:]:
+                    msg += ' ' + c
                 ssl_sock.write(msg.encode('utf-8'))
                 ack = ssl_sock.read().decode()
                 print(ack)
