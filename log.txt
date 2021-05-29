@@ -1,0 +1,21 @@
+Client: Hi server
+Server: Hi client
+Command: telnet send hi
+Client: send hi
+Server: Message recceived
+Client: Hi server
+Server: Hi client
+Command: telnet upload send.txt
+Client: Hi server
+Server: Hi client
+Command: telnet send -e hi there
+Client: ‹OãÓrïsàBvâçª’¤>ÿ¦AÊ¯ªúô©Ø‰Ú<! Õæ,›ôRÛ$’Ž™¨Rû™o×ùCˆrvÙ
+Server: Message recceived
+Client: Hi server
+Server: Hi client
+Command: telnet send hello neighbour
+Client: send hello neighbour
+Server: Message recceived
+Command: telnet send -e hello neighbourvfvf
+Client: ? }ZøÝ:y‰¨!çcz~ånî5šúŸÒ¿Ü¦EoÔ%eA¼0˜Mö¼þ¤1¨ÇËQá»7á.ÿýÕ€Cµ6³
+Server: Message recceived
